@@ -12,15 +12,7 @@
 
 ## 打包 APK
 
-当前运行环境没有 Android SDK / Gradle / ADB，所以这里不能直接生成 `.apk`。在本机用 Android Studio 打包：
-
-1. 打开 Android Studio。
-2. 选择 `Open`，打开本目录 `android/`。
-3. 等待 Gradle 同步完成。
-4. 选择 `Build > Build Bundle(s) / APK(s) > Build APK(s)`。
-5. APK 输出路径通常为 `android/app/build/outputs/apk/debug/app-debug.apk`。
-
-项目已内置 `app/debug.keystore` 作为演示签名证书，`debug` 和 `release` APK 都会默认使用它签名，避免打包时报 `Missing keystore`。如果要发布到应用商店，请在 Android Studio 中创建自己的发布 keystore，并替换 `app/build.gradle` 里的 `release` 签名配置。
+ .\gradlew.bat  assembleRelease
 
 ## 手机连接服务端
 
