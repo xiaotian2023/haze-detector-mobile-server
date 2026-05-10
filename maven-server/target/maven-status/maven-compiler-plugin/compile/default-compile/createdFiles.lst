@@ -1,3 +1,6 @@
+com/example/hazedetector/server/model/LifeIndex.class
 com/example/hazedetector/server/service/ClientSessionService$ClientSession.class
 com/example/hazedetector/server/service/EnvFile.class
+com/example/hazedetector/server/model/HourlyForecast.class
+com/example/hazedetector/server/model/DailyForecast.class
 com/example/hazedetector/server/service/ClientSessionService.class

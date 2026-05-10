@@ -14,6 +14,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Calendar;
 import java.util.Locale;
 
 final class WeatherClient {
@@ -96,6 +97,9 @@ final class WeatherClient {
                 Math.max(20, Math.min(300, Math.round((float) (aqi + Math.sin((h + base) / 24.0 * Math.PI * 2) * 25))))
             ));
         }
+        addFallbackHourlyForecasts(data, hour, temperature, humidity);
+        addFallbackForecasts(data, base, temperature);
+        addFallbackIndexes(data);
         return data;
     }
 
@@ -133,7 +137,120 @@ final class WeatherClient {
                 ));
             }
         }
+        JSONArray forecasts = root.optJSONArray("forecasts");
+        if (forecasts != null) {
+            for (int i = 0; i < forecasts.length(); i++) {
+                JSONObject item = forecasts.getJSONObject(i);
+                data.forecasts.add(new ForecastDay(
+                    item.optString("date", "--"),
+                    item.optString("week", ""),
+                    item.optString("dayText", "--"),
+                    item.optString("nightText", item.optString("dayText", "--")),
+                    item.optInt("high", data.temperature),
+                    item.optInt("low", data.temperature),
+                    item.optString("windDirection", "--"),
+                    item.optString("windClass", "--")
+                ));
+            }
+        }
+        if (data.forecasts.isEmpty()) {
+            addFallbackForecasts(data, cityBase(data.city), data.temperature);
+        }
+        JSONArray hourlyForecasts = root.optJSONArray("hourlyForecasts");
+        if (hourlyForecasts != null) {
+            for (int i = 0; i < hourlyForecasts.length(); i++) {
+                JSONObject item = hourlyForecasts.getJSONObject(i);
+                data.hourlyForecasts.add(new HourlyForecast(
+                    formatHour(item.optString("time", "")),
+                    item.optString("text", "--"),
+                    item.optInt("temperature", data.temperature),
+                    item.optInt("humidity", data.humidity),
+                    item.optString("windDirection", "--"),
+                    item.optString("windClass", "--"),
+                    item.optDouble("precipitation", 0)
+                ));
+            }
+        }
+        if (data.hourlyForecasts.isEmpty()) {
+            addFallbackHourlyForecasts(data, new Date().getHours(), data.temperature, data.humidity);
+        }
+        JSONArray indexes = root.optJSONArray("indexes");
+        if (indexes != null) {
+            for (int i = 0; i < indexes.length(); i++) {
+                JSONObject item = indexes.getJSONObject(i);
+                data.indexes.add(new LifeIndex(
+                    item.optString("name", "--"),
+                    item.optString("brief", "--"),
+                    item.optString("detail", "")
+                ));
+            }
+        }
+        if (data.indexes.isEmpty()) {
+            addFallbackIndexes(data);
+        }
         return data;
+    }
+
+    private static int cityBase(String city) {
+        int base = 0;
+        if (city == null) {
+            return base;
+        }
+        for (int i = 0; i < city.length(); i++) {
+            base += city.charAt(i);
+        }
+        return base;
+    }
+
+    private static void addFallbackForecasts(WeatherData data, int base, int temperature) {
+        String[] texts = {"晴", "多云", "阴", "小雨", "霾"};
+        String[] weeks = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
+        for (int i = 0; i < 7; i++) {
+            int high = temperature + 2 + Math.round((float) Math.sin((base + i) / 3.0) * 4);
+            int low = high - 5 - Math.abs((base + i) % 4);
+            data.forecasts.add(new ForecastDay(
+                new SimpleDateFormat("MM-dd", Locale.CHINA).format(calendar.getTime()),
+                i == 0 ? "今天" : weeks[calendar.get(Calendar.DAY_OF_WEEK) - 1],
+                texts[positiveMod(base + i, texts.length)],
+                texts[positiveMod(base + i + 1, texts.length)],
+                high,
+                low,
+                "东北风",
+                "1-3级"
+            ));
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+        }
+    }
+
+    private static void addFallbackHourlyForecasts(WeatherData data, int hour, int temperature, int humidity) {
+        String[] texts = {"多云", "晴", "阴", "小雨"};
+        for (int i = 0; i < 24; i++) {
+            int h = (hour + i) % 24;
+            data.hourlyForecasts.add(new HourlyForecast(
+                String.format(Locale.CHINA, "%02d:00", h),
+                texts[positiveMod(i, texts.length)],
+                Math.round((float) (temperature + Math.sin(h / 24.0 * Math.PI * 2) * 4)),
+                Math.max(30, Math.min(95, Math.round((float) (humidity + Math.cos(h / 24.0 * Math.PI * 2) * 8)))),
+                "东北风",
+                "1-3级",
+                i % 7 == 0 ? 0.2 : 0
+            ));
+        }
+    }
+
+    private static void addFallbackIndexes(WeatherData data) {
+        data.indexes.add(new LifeIndex("穿衣指数", "舒适", "适合穿薄外套、长袖衬衫等春秋服装。"));
+        data.indexes.add(new LifeIndex("运动指数", "较适宜", "空气质量尚可，适合适量户外运动。"));
+        data.indexes.add(new LifeIndex("紫外线指数", "中等", "外出可适当涂抹防晒用品。"));
+        data.indexes.add(new LifeIndex("洗车指数", "适宜", "近期降水概率较低，适合洗车。"));
+        data.indexes.add(new LifeIndex("感冒指数", "少发", "昼夜温差不大，感冒概率较低。"));
+        data.indexes.add(new LifeIndex("晨练指数", "适宜", "清晨空气较好，适合晨练。"));
+    }
+
+    private static int positiveMod(int value, int size) {
+        int result = value % size;
+        return result < 0 ? result + size : result;
     }
 
     private String getText(String rawUrl) throws Exception {
@@ -185,6 +302,19 @@ final class WeatherClient {
             return new SimpleDateFormat("MM-dd HH:mm", Locale.CHINA).format(date);
         } catch (Exception error) {
             return new SimpleDateFormat("MM-dd HH:mm", Locale.CHINA).format(new Date());
+        }
+    }
+
+    private String formatHour(String iso) {
+        try {
+            String normalized = iso.replace("Z", "+0000");
+            if (normalized.contains(".")) {
+                normalized = normalized.substring(0, normalized.indexOf(".")) + "+0000";
+            }
+            Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US).parse(normalized);
+            return new SimpleDateFormat("HH:mm", Locale.CHINA).format(date);
+        } catch (Exception error) {
+            return "--";
         }
     }
 

@@ -2,7 +2,10 @@ package com.example.hazedetector.server.service;
 
 import com.example.hazedetector.server.model.AirQuality;
 import com.example.hazedetector.server.model.AqiLevel;
+import com.example.hazedetector.server.model.DailyForecast;
+import com.example.hazedetector.server.model.HourlyForecast;
 import com.example.hazedetector.server.model.HourlyPoint;
+import com.example.hazedetector.server.model.LifeIndex;
 import com.example.hazedetector.server.model.WeatherInfo;
 import com.example.hazedetector.server.model.WeatherResponse;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,6 +77,7 @@ public class BaiduWeatherService {
             int temperature = parseInt(now.path("temp").asText(), 0);
             int humidity = parseInt(now.path("rh").asText(), 0);
             AirQuality air = parseAir(now).orElseGet(() -> simulatedAir(city, humidity));
+            List<HourlyForecast> hourlyForecasts = hourlyForecasts(result.path("forecast_hours"), temperature, humidity);
 
             WeatherResponse response = new WeatherResponse(
                 cityFromResult(result, city),
@@ -86,7 +91,10 @@ public class BaiduWeatherService {
                     windSpeed(now.path("wind_class").asText())
                 ),
                 air,
-                hourly(temperature, humidity, air.aqi())
+                hourlyPoints(hourlyForecasts, temperature, humidity, air.aqi()),
+                forecasts(result.path("forecasts"), city, temperature),
+                hourlyForecasts,
+                indexes(result.path("indexes"))
             );
             return Optional.of(response);
         } catch (Exception error) {
@@ -114,6 +122,89 @@ public class BaiduWeatherService {
             parseInt(now.path("so2").asText(), 0),
             parseInt(now.path("o3").asText(), 0)
         ));
+    }
+
+    private List<DailyForecast> forecasts(JsonNode forecastNodes, String city, int currentTemperature) {
+        List<DailyForecast> days = new ArrayList<>();
+        if (forecastNodes != null && forecastNodes.isArray()) {
+            for (JsonNode item : forecastNodes) {
+                if (days.size() >= 7) {
+                    break;
+                }
+                String dayText = firstNonBlank(
+                    item.path("text_day").asText(),
+                    item.path("textDay").asText(),
+                    item.path("text").asText(),
+                    "--"
+                );
+                String nightText = firstNonBlank(
+                    item.path("text_night").asText(),
+                    item.path("textNight").asText(),
+                    dayText
+                );
+                days.add(new DailyForecast(
+                    firstNonBlank(item.path("date").asText(), "--"),
+                    firstNonBlank(item.path("week").asText(), ""),
+                    dayText,
+                    nightText,
+                    parseInt(firstNonBlank(item.path("high").asText(), item.path("temp_high").asText()), currentTemperature + 3),
+                    parseInt(firstNonBlank(item.path("low").asText(), item.path("temp_low").asText()), currentTemperature - 3),
+                    firstNonBlank(item.path("wd_day").asText(), item.path("wd_night").asText(), item.path("wind_dir").asText(), "--"),
+                    firstNonBlank(item.path("wc_day").asText(), item.path("wc_night").asText(), item.path("wind_class").asText(), "--")
+                ));
+            }
+        }
+        return days.isEmpty() ? simulatedForecasts(city, currentTemperature) : days;
+    }
+
+    private List<HourlyForecast> hourlyForecasts(JsonNode forecastNodes, int currentTemperature, int currentHumidity) {
+        List<HourlyForecast> hours = new ArrayList<>();
+        if (forecastNodes != null && forecastNodes.isArray()) {
+            for (JsonNode item : forecastNodes) {
+                if (hours.size() >= 24) {
+                    break;
+                }
+                Instant time = parseBaiduTime(item.path("data_time").asText(""));
+                hours.add(new HourlyForecast(
+                    time,
+                    firstNonBlank(item.path("text").asText(), "--"),
+                    parseInt(item.path("temp_fc").asText(), currentTemperature),
+                    parseInt(item.path("rh").asText(), currentHumidity),
+                    firstNonBlank(item.path("wind_dir").asText(), "--"),
+                    firstNonBlank(item.path("wind_class").asText(), "--"),
+                    round1(parseDouble(item.path("prec_1h").asText(), 0))
+                ));
+            }
+        }
+        return hours.isEmpty() ? simulatedHourlyForecasts(currentTemperature, currentHumidity) : hours;
+    }
+
+    private List<HourlyPoint> hourlyPoints(List<HourlyForecast> forecasts, int temperature, int humidity, int aqi) {
+        if (forecasts == null || forecasts.isEmpty()) {
+            return hourly(temperature, humidity, aqi);
+        }
+        List<HourlyPoint> points = new ArrayList<>();
+        for (HourlyForecast forecast : forecasts) {
+            points.add(new HourlyPoint(forecast.time(), forecast.temperature(), forecast.humidity(), aqi));
+        }
+        return points;
+    }
+
+    private List<LifeIndex> indexes(JsonNode indexNodes) {
+        List<LifeIndex> items = new ArrayList<>();
+        if (indexNodes != null && indexNodes.isArray()) {
+            for (JsonNode item : indexNodes) {
+                if (items.size() >= 8) {
+                    break;
+                }
+                items.add(new LifeIndex(
+                    firstNonBlank(item.path("name").asText(), "--"),
+                    firstNonBlank(item.path("brief").asText(), "--"),
+                    firstNonBlank(item.path("detail").asText(), "")
+                ));
+            }
+        }
+        return items.isEmpty() ? simulatedIndexes() : items;
     }
 
     private String buildWeatherUrl(String districtId) {
@@ -186,6 +277,73 @@ public class BaiduWeatherService {
             points.add(new HourlyPoint(time, temp, hum, hourAqi));
         }
         return points;
+    }
+
+    private List<DailyForecast> simulatedForecasts(String city, int currentTemperature) {
+        int base = city == null ? 0 : city.chars().sum();
+        List<DailyForecast> days = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        String[] texts = {"晴", "多云", "阴", "小雨", "霾"};
+        String[] weeks = {"周一", "周二", "周三", "周四", "周五", "周六", "周日"};
+        for (int i = 0; i < 7; i++) {
+            LocalDateTime date = now.plusDays(i);
+            int high = currentTemperature + 2 + Math.round((float) Math.sin((base + i) / 3.0) * 4);
+            int low = high - 5 - Math.abs((base + i) % 4);
+            String dayText = texts[Math.floorMod(base + i, texts.length)];
+            String nightText = texts[Math.floorMod(base + i + 1, texts.length)];
+            days.add(new DailyForecast(
+                String.format("%02d-%02d", date.getMonthValue(), date.getDayOfMonth()),
+                i == 0 ? "今天" : weeks[date.getDayOfWeek().getValue() - 1],
+                dayText,
+                nightText,
+                high,
+                low,
+                "东北风",
+                "1-3级"
+            ));
+        }
+        return days;
+    }
+
+    private List<HourlyForecast> simulatedHourlyForecasts(int temperature, int humidity) {
+        List<HourlyForecast> hours = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        String[] texts = {"多云", "晴", "阴", "小雨"};
+        for (int i = 0; i < 24; i++) {
+            LocalDateTime time = now.plusHours(i).withMinute(0).withSecond(0).withNano(0);
+            int h = time.getHour();
+            hours.add(new HourlyForecast(
+                time.atZone(ZoneId.systemDefault()).toInstant(),
+                texts[i % texts.length],
+                Math.round((float) (temperature + Math.sin(h / 24.0 * Math.PI * 2) * 4)),
+                Math.max(30, Math.min(95, Math.round((float) (humidity + Math.cos(h / 24.0 * Math.PI * 2) * 8)))),
+                "东北风",
+                "1-3级",
+                i % 7 == 0 ? 0.2 : 0
+            ));
+        }
+        return hours;
+    }
+
+    private List<LifeIndex> simulatedIndexes() {
+        return List.of(
+            new LifeIndex("穿衣指数", "舒适", "适合穿薄外套、长袖衬衫等春秋服装。"),
+            new LifeIndex("运动指数", "较适宜", "空气质量尚可，适合适量户外运动。"),
+            new LifeIndex("紫外线指数", "中等", "外出可适当涂抹防晒用品。"),
+            new LifeIndex("洗车指数", "适宜", "近期降水概率较低，适合洗车。"),
+            new LifeIndex("感冒指数", "少发", "昼夜温差不大，感冒概率较低。"),
+            new LifeIndex("晨练指数", "适宜", "清晨空气较好，适合晨练。")
+        );
+    }
+
+    private Instant parseBaiduTime(String value) {
+        try {
+            return LocalDateTime.parse(value, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
+        } catch (Exception error) {
+            return Instant.now();
+        }
     }
 
     private int windSpeed(String windClass) {

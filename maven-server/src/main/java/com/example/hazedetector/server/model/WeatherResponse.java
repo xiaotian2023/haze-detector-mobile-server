@@ -9,6 +9,9 @@ public record WeatherResponse(
     String source,
     WeatherInfo weather,
     AirQuality air,
-    List<HourlyPoint> hourly
+    List<HourlyPoint> hourly,
+    List<DailyForecast> forecasts,
+    List<HourlyForecast> hourlyForecasts,
+    List<LifeIndex> indexes
 ) {
 }

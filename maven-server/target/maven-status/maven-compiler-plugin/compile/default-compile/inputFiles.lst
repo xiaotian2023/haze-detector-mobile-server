@@ -4,7 +4,10 @@
 /mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/AqiLevel.java
 /mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/City.java
 /mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/Coordinates.java
+/mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/DailyForecast.java
+/mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/HourlyForecast.java
 /mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/HourlyPoint.java
+/mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/LifeIndex.java
 /mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/LocationRecord.java
 /mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/LocationRequest.java
 /mnt/e/bce/maven-server/src/main/java/com/example/hazedetector/server/model/ResolvedLocation.java

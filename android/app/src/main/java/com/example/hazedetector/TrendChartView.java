@@ -12,6 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TrendChartView extends View {
+    private static final int TEMPERATURE_COLOR = Color.rgb(232, 127, 72);
+    private static final int HUMIDITY_COLOR = Color.rgb(18, 108, 115);
+    private static final int AQI_COLOR = Color.rgb(123, 30, 58);
+
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<TrendPoint> points = new ArrayList<>();
 
@@ -58,16 +62,11 @@ public class TrendChartView extends View {
             paint.setColor(Color.argb(45, 16, 38, 45));
         }
 
-        drawSeries(canvas, left, top, chartWidth, chartHeight, min, max, Color.rgb(232, 127, 72), 0);
-        drawSeries(canvas, left, top, chartWidth, chartHeight, min, max, Color.rgb(18, 108, 115), 1);
-        drawSeries(canvas, left, top, chartWidth, chartHeight, min, max, Color.rgb(123, 30, 58), 2);
+        drawSeries(canvas, left, top, chartWidth, chartHeight, min, max, TEMPERATURE_COLOR, 0);
+        drawSeries(canvas, left, top, chartWidth, chartHeight, min, max, HUMIDITY_COLOR, 1);
+        drawSeries(canvas, left, top, chartWidth, chartHeight, min, max, AQI_COLOR, 2);
 
-        paint.setStyle(Paint.Style.FILL);
-        paint.setTextSize(dpLocal(11));
-        paint.setColor(Color.rgb(99, 128, 135));
-        canvas.drawText("温度", left, height - dpLocal(8), paint);
-        canvas.drawText("湿度", left + dpLocal(58), height - dpLocal(8), paint);
-        canvas.drawText("AQI", left + dpLocal(116), height - dpLocal(8), paint);
+        drawLegend(canvas, left, height - dpLocal(8));
     }
 
     private void drawSeries(Canvas canvas, int left, int top, int chartWidth, int chartHeight, int min, int max, int color, int type) {
@@ -84,6 +83,30 @@ public class TrendChartView extends View {
             else path.lineTo(x, y);
         }
         canvas.drawPath(path, paint);
+    }
+
+    private void drawLegend(Canvas canvas, int left, int baseline) {
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(dpLocal(3));
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        int x = left;
+        x = drawLegendItem(canvas, x, baseline, TEMPERATURE_COLOR, "温度");
+        x = drawLegendItem(canvas, x + dpLocal(22), baseline, HUMIDITY_COLOR, "湿度");
+        drawLegendItem(canvas, x + dpLocal(22), baseline, AQI_COLOR, "AQI");
+        paint.setStrokeCap(Paint.Cap.BUTT);
+    }
+
+    private int drawLegendItem(Canvas canvas, int x, int baseline, int color, String label) {
+        int lineY = baseline - dpLocal(4);
+        paint.setColor(color);
+        canvas.drawLine(x, lineY, x + dpLocal(22), lineY, paint);
+
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextSize(dpLocal(11));
+        paint.setColor(Color.rgb(65, 87, 93));
+        canvas.drawText(label, x + dpLocal(28), baseline, paint);
+        paint.setStyle(Paint.Style.STROKE);
+        return x + dpLocal(28) + Math.round(paint.measureText(label));
     }
 
     private int dpLocal(int value) {
