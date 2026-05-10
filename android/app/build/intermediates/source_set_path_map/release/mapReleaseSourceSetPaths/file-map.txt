@@ -1,0 +1,7 @@
+com.example.hazedetector.app-pngs-0 E:\bce\android\app\build\generated\res\pngs\release
+com.example.hazedetector.app-resValues-1 E:\bce\android\app\build\generated\res\resValues\release
+com.example.hazedetector.app-packageReleaseResources-2 E:\bce\android\app\build\intermediates\incremental\release\packageReleaseResources\merged.dir
+com.example.hazedetector.app-packageReleaseResources-3 E:\bce\android\app\build\intermediates\incremental\release\packageReleaseResources\stripped.dir
+com.example.hazedetector.app-release-4 E:\bce\android\app\build\intermediates\merged_res\release\mergeReleaseResources
+com.example.hazedetector.app-main-5 E:\bce\android\app\src\main\res
+com.example.hazedetector.app-release-6 E:\bce\android\app\src\release\res

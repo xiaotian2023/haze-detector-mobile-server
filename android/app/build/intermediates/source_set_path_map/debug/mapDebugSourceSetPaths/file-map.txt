@@ -1,0 +1,7 @@
+com.example.hazedetector.app-pngs-0 E:\bce\android\app\build\generated\res\pngs\debug
+com.example.hazedetector.app-resValues-1 E:\bce\android\app\build\generated\res\resValues\debug
+com.example.hazedetector.app-packageDebugResources-2 E:\bce\android\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.example.hazedetector.app-packageDebugResources-3 E:\bce\android\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.example.hazedetector.app-debug-4 E:\bce\android\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.example.hazedetector.app-debug-5 E:\bce\android\app\src\debug\res
+com.example.hazedetector.app-main-6 E:\bce\android\app\src\main\res

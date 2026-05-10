@@ -1,0 +1,56 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.hazedetector"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="23"
+9        android:targetSdkVersion="35" />
+10
+11    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+11-->E:\bce\android\app\src\main\AndroidManifest.xml:3:5-79
+11-->E:\bce\android\app\src\main\AndroidManifest.xml:3:22-76
+12    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+12-->E:\bce\android\app\src\main\AndroidManifest.xml:4:5-81
+12-->E:\bce\android\app\src\main\AndroidManifest.xml:4:22-78
+13    <uses-permission android:name="android.permission.INTERNET" />
+13-->E:\bce\android\app\src\main\AndroidManifest.xml:5:5-67
+13-->E:\bce\android\app\src\main\AndroidManifest.xml:5:22-64
+14
+15    <application
+15-->E:\bce\android\app\src\main\AndroidManifest.xml:7:5-22:19
+16        android:allowBackup="true"
+16-->E:\bce\android\app\src\main\AndroidManifest.xml:8:9-35
+17        android:debuggable="true"
+18        android:extractNativeLibs="false"
+19        android:icon="@mipmap/ic_launcher"
+19-->E:\bce\android\app\src\main\AndroidManifest.xml:9:9-43
+20        android:label="雾霾探测"
+20-->E:\bce\android\app\src\main\AndroidManifest.xml:10:9-29
+21        android:roundIcon="@mipmap/ic_launcher_round"
+21-->E:\bce\android\app\src\main\AndroidManifest.xml:11:9-54
+22        android:theme="@style/AppTheme"
+22-->E:\bce\android\app\src\main\AndroidManifest.xml:12:9-40
+23        android:usesCleartextTraffic="true" >
+23-->E:\bce\android\app\src\main\AndroidManifest.xml:13:9-44
+24        <activity
+24-->E:\bce\android\app\src\main\AndroidManifest.xml:14:9-21:20
+25            android:name="com.example.hazedetector.MainActivity"
+25-->E:\bce\android\app\src\main\AndroidManifest.xml:15:13-41
+26            android:exported="true" >
+26-->E:\bce\android\app\src\main\AndroidManifest.xml:16:13-36
+27            <intent-filter>
+27-->E:\bce\android\app\src\main\AndroidManifest.xml:17:13-20:29
+28                <action android:name="android.intent.action.MAIN" />
+28-->E:\bce\android\app\src\main\AndroidManifest.xml:18:17-69
+28-->E:\bce\android\app\src\main\AndroidManifest.xml:18:25-66
+29
+30                <category android:name="android.intent.category.LAUNCHER" />
+30-->E:\bce\android\app\src\main\AndroidManifest.xml:19:17-77
+30-->E:\bce\android\app\src\main\AndroidManifest.xml:19:27-74
+31            </intent-filter>
+32        </activity>
+33    </application>
+34
+35</manifest>
